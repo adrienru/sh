@@ -28,15 +28,16 @@ git clone https://github.com/tuusuario/docker-setup-auto.git \
   && chmod +x setup_total.sh \
   && sudo bash setup_total.sh
 
-### ⚡ Opción 2: Ejecutar sin clonar (copia y pega directo)
-## 🔽 Usando curl
+#### ⚡ Opción 2: Ejecutar sin clonar (copia y pega directo)
+🔽 Usando curl
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/tuusuario/docker-setup-auto/main/setup_total.sh | sudo bash
-## 🔽 Usando wget
+##### 🔽 Usando wget
 ```bash
 wget -qO- https://raw.githubusercontent.com/tuusuario/docker-setup-auto/main/setup_total.sh | sudo bash
 
-## 📦 ¿Qué hace este script?
+###### 📦 ¿Qué hace este script?
 
 Reemplaza el script wrapdocker en /google/scripts/
 
