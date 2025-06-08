@@ -114,9 +114,7 @@ sudo /google/scripts/wrapdocker/wrapdocker
 check "wrapdocker ejecutado correctamente"
 
 # 9. Crear composer.yml
-cat <<EOF > /home/user/composer.yml
-version: "3.8"
-
+cat <<EOF > /home/user/docker-compose.yml
 services:
   windows:
     image: dockurr/windows
@@ -142,9 +140,9 @@ services:
       - /home/user/win:/storage
 EOF
 
-check "composer.yml creado al final"
+check "docker-compose.yml creado al final"
 
 # 10. Ejecutar docker compose
 cd /home/user
-docker compose -f composer.yml up -d
+docker compose up -d
 check "docker compose ejecutado al final"
