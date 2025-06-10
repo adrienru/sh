@@ -113,36 +113,4 @@ check "inotify-tools instalado"
 sudo /google/scripts/wrapdocker/wrapdocker
 check "wrapdocker ejecutado correctamente"
 
-# 9. Crear composer.yml
-cat <<EOF > /home/user/docker-compose.yml
-services:
-  windows:
-    image: dockurr/windows
-    container_name: windows10
-    environment:
-      VERSION: "10"
-      RAM_SIZE: "12G"
-      CPU_CORES: "4"
-      DISK_SIZE: "30G"
-      LANGUAGE: "Spanish"
-    devices:
-      - /dev/kvm
-      - /dev/net/tun
-    cap_add:
-      - NET_ADMIN
-    ports:
-      - 8006:8006
-      - 3389:3389/tcp
-      - 3389:3389/udp
-    restart: always
-    stop_grace_period: 2m
-    volumes:
-      - /home/user/win:/storage
-EOF
-
-check "docker-compose.yml creado al final"
-
-# 10. Ejecutar docker compose
-cd /home/user
-docker compose up -d
 check "docker compose ejecutado al final"
