@@ -1,0 +1,15 @@
+🧪 Para compilar y correr:
+bash
+Copiar
+Editar
+docker build -f Dockerfile.kali.xfce -t kali-xfce .
+docker run -d -p 3389:3389 -p 5902:5902 --name kali-rdp kali-xfce
+Accede con:
+
+RDP: localhost:3389
+
+VNC: localhost:5902
+
+Usuario: testuser
+
+Contraseña: 1234
