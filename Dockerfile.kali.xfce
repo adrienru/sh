@@ -10,7 +10,7 @@ RUN apt update && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
 
-ARG USER=testuser
+ARG USER=adrian
 ARG PASS=1234
 
 RUN useradd -m $USER -p $(openssl passwd $PASS) && \
