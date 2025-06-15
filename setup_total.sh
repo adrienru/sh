@@ -80,37 +80,6 @@ EOF
 chmod +x /google/scripts/wrapdocker/wrapdocker
 check "wrapdocker actualizado y con permisos ejecutables"
 
-# 3. Instalar ngrok
-curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-  | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
-  && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
-  | sudo tee /etc/apt/sources.list.d/ngrok.list \
-  && sudo apt update \
-  && sudo apt install -y ngrok
-check "ngrok instalado"
-
-# 4. Agregar authtoken
-ngrok config add-authtoken 2urQXSJWVDvP9pLTvWhuBHZGPoa_5LoTJjaH8whBZjZ7VtwUC
-check "ngrok authtoken agregado"
-
-# 5. Crear subdock.sh
-cat <<'EOF' > /home/user/subdock.sh
-#!/bin/bash
-# Aquí va tu script personalizado futuro
-echo "Subdock ejecutado"
-EOF
-
-# 6. Permisos y moverlo
-chmod +x /home/user/subdock.sh
-sudo mv /home/user/subdock.sh /usr/local/bin/subdock
-check "subdock.sh creado y movido a /usr/local/bin"
-
-# 7. Instalar inotify-tools
-sudo apt install -y inotify-tools
-check "inotify-tools instalado"
-
 # 8. Ejecutar wrapdocker
 sudo /google/scripts/wrapdocker/wrapdocker
 check "wrapdocker ejecutado correctamente"
-
-check "docker compose ejecutado al final"
