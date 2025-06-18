@@ -28,7 +28,9 @@ git clone https://github.com/adrienru/sh.git \
   && chmod +x setup_total.sh \
   && sudo bash setup_total.sh
 ```
-
+```
+curl -fsSL https://raw.githubusercontent.com/adrienru/sh/main/instalar_vnc.sh | bash
+```
 ### 🔁 Opción 2: Ejecutar directamente desde GitHub
 
 ```bash
