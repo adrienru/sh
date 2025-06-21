@@ -39,7 +39,7 @@ curl -sSL https://raw.githubusercontent.com/adrienru/sh/main/setup_total.sh | su
 
 ### ejecutar install
 
-```
+```bash
 curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/install.sh | bash
 ---
 
