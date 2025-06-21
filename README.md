@@ -37,6 +37,11 @@ curl -fsSL https://raw.githubusercontent.com/adrienru/sh/main/instalar_vnc.sh | 
 curl -sSL https://raw.githubusercontent.com/adrienru/sh/main/setup_total.sh | sudo bash
 ```
 
+### instalar rclone 
+```bash
+sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
+
 ### ejecutar install
 
 ```bash
