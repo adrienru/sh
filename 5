@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# 📁 Configuración de rutas
+RCLONE_REMOTE="onedrive:prog"
+DIR_DESCARGA="/home/user/1"           # Carpeta temporal local
+DIR_SALIDA="/home/user/stego/salida"  # Carpeta donde guardar WAVs
+LOG_FILE="/home/user/stego/log.txt"
+HASH_FILE="/home/user/stego/hashes.txt"
+GPG_ENC_FILE="/home/user/stego/hashes.txt.enc"
+MAP_FILE="/home/user/stego/mapa_conversion.txt"  # Nuevo archivo de mapeo imagen→audio
+
+# 🧽 Crear carpetas si no existen
+mkdir -p "$DIR_DESCARGA"
+mkdir -p "$DIR_SALIDA"
+
+# 📋 MENÚ DE OPCIONES:
+echo "📋 MENÚ DE OPCIONES:"
+echo "📤 SUBIDA:"
+echo "  1) Subir audios generados a OneDrive ($RCLONE_REMOTE/audio)"
+echo "  2) Subir log a OneDrive ($RCLONE_REMOTE/log)"
+echo "  3) Subir hashes encriptados (.enc) a OneDrive ($RCLONE_REMOTE/log)"
+echo ""
+echo "📥 DESCARGA Y PROCESAMIENTO:"
+echo "  4) Descargar imágenes desde OneDrive"
+echo "  5) Convertir imágenes descargadas a audios"
+echo "  6) Renombrar archivos WAV con nombre de imagen original"
+echo ""
+echo "🧹 LIMPIEZA LOCAL:"
+echo "  7) Eliminar solo imágenes locales de: $DIR_DESCARGA"
+echo "  8) Eliminar imágenes y audios locales"
+echo "  9) Eliminar log local ($LOG_FILE)"
+echo ""
+echo "🧪 VERIFICACIÓN:"
+echo " 10) Verificar hashes de imágenes descargadas con OneDrive"
+echo " 11) Verificar hashes de audios locales con los subidos"
+echo ""
+echo "🔐 CIFRADO:"
+echo " 12) Encriptar hashes con GPG (.enc)"
+echo ""
+echo "🚪 SALIDA:"
+echo " 13) Salir"
+echo ""
+
+read -p "➡️ Elige una opción [1-13]: " opt
+
+case $opt in
+    1)
+        echo "☁️ Subiendo audios a OneDrive..."
+        total=$(ls "$DIR_SALIDA"/*.wav 2>/dev/null | wc -l)
+        count=0
+        for f in "$DIR_SALIDA"/*.wav; do
+            count=$((count+1))
+            echo -ne "  ⏫ Subiendo [$count/$total]: $(basename "$f")\r"
+            rclone copy "$f" "$RCLONE_REMOTE/audio" --no-traverse
+        done
+        echo -e "\n✅ Todos los audios han sido subidos."
+        ;;
+    2)
+        echo "📤 Subiendo log.txt"
+        rclone copy "$LOG_FILE" "$RCLONE_REMOTE/log" --no-traverse
+        echo "✅ Log subido."
+        ;;
+    3)
+        echo "📤 Subiendo hashes encriptados (.enc)"
+        rclone copy "$GPG_ENC_FILE" "$RCLONE_REMOTE/log" --no-traverse
+        echo "✅ Hashes encriptados subidos."
+        ;;
+    4)
+        echo "🔽 Descargando archivos desde $RCLONE_REMOTE/convertir ..."
+        rclone copy "$RCLONE_REMOTE/convertir" "$DIR_DESCARGA" --progress
+        echo "✅ Archivos descargados a $DIR_DESCARGA"
+        ;;
+    5)
+        echo "🧠 Ejecutando conversión de archivos..."
+        python3 procesar.py "$DIR_DESCARGA" "$DIR_SALIDA" "$LOG_FILE" "$HASH_FILE" "$MAP_FILE"
+        ;;
+    6)
+        echo "✏️ Renombrando archivos WAV con nombres de imagen..."
+        while IFS='→' read -r img wav; do
+            nombre_img=$(basename "$img" | sed 's/\.[^.]*$//')
+            nombre_wav=$(echo "$wav" | xargs)
+            nuevo_nombre="$DIR_SALIDA/$nombre_img.wav"
+            original_path="$DIR_SALIDA/$nombre_wav"
+            if [[ -f "$original_path" ]]; then
+                mv "$original_path" "$nuevo_nombre"
+                echo "🔁 $nombre_wav renombrado a $(basename "$nuevo_nombre")"
+            fi
+        done < "$MAP_FILE"
+        echo "✅ Todos los archivos fueron renombrados."
+        ;;
+    7)
+        echo "🗑️ Eliminando imágenes de $DIR_DESCARGA..."
+        rm -f "$DIR_DESCARGA"/*
+        echo "✅ Imágenes eliminadas."
+        ;;
+    8)
+        echo "🗑️ Eliminando imágenes y audios locales..."
+        rm -f "$DIR_DESCARGA"/*
+        rm -f "$DIR_SALIDA"/*
+        echo "✅ Limpieza completa."
+        ;;
+    9)
+        echo "🗑️ Eliminando log..."
+        rm -f "$LOG_FILE"
+        echo "✅ Log eliminado."
+        ;;
+    10)
+        echo "🔎 Verificando hashes de imágenes descargadas..."
+        echo "✔️ Todos los hashes coinciden (simulado)"
+        ;;
+    11)
+        echo "🔎 Verificando hashes de audios subidos..."
+        echo "✔️ Todos los hashes coinciden (simulado)"
+        ;;
+    12)
+        echo "🔐 Encriptando hashes con GPG..."
+        gpg --yes --batch -o "$GPG_ENC_FILE" -c "$HASH_FILE"
+        echo "✅ Hashes encriptados en $GPG_ENC_FILE"
+        ;;
+    13)
+        echo "👋 Saliendo."
+        exit 0
+        ;;
+    *)
+        echo "❌ Opción inválida."
+        ;;
+esac
