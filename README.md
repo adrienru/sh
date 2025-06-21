@@ -41,9 +41,9 @@ curl -sSL https://raw.githubusercontent.com/adrienru/sh/main/setup_total.sh | su
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/install.sh | bash
+```
 
-
-## 📁 Estructura del proyecto
+### 📁 Estructura del proyecto
 
 ```text
 sh/
