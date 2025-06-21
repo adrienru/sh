@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-# 1. Instalar rclone
-echo "🔧 Instalando rclone..."
-sudo -v
-curl https://rclone.org/install.sh | sudo bash
-
 # 2. Crear carpeta config si no existe
 CONFIG_DIR="$HOME/.config/rclone"
 mkdir -p "$CONFIG_DIR"
