@@ -37,6 +37,10 @@ curl -fsSL https://raw.githubusercontent.com/adrienru/sh/main/instalar_vnc.sh | 
 curl -sSL https://raw.githubusercontent.com/adrienru/sh/main/setup_total.sh | sudo bash
 ```
 
+### ejecutar install
+
+```
+curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/install.sh | bash
 ---
 
 ## 📁 Estructura del proyecto
