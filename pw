@@ -1,0 +1,235 @@
+#!/bin/bash
+
+# 📁 Configuración de rutas
+RCLONE_REMOTE="onedrive:prog"
+DIR_DESCARGA="/home/user/1"           # Carpeta temporal local
+DIR_SALIDA="/home/user/stego/salida"  # Carpeta donde guardar WAVs
+LOG_FILE="/home/user/stego/log.txt"   # archivo donde se guardan los logs
+# Archivos hashes
+HASH_FILE="/home/user/stego/hashes.txt"
+GPG_ENC_FILE="/home/user/stego/hashes.txt.enc"
+MAP_FILE="/home/user/stego/mapa_conversion.txt"  # Nuevo archivo de mapeo imagen→audio
+HASH_IMG="/home/user/stego/hashes_imgs.txt"
+HASH_WAV="/home/user/stego/hashes_audios.txt"
+# # Archivos cifrados
+ENC_IMG="${HASH_IMG}.enc"
+ENC_WAV="${HASH_WAV}.enc"
+ENC_LOG="${LOG_FILE}.enc"
+
+# 🧽 Crear carpetas si no existen
+mkdir -p "$DIR_DESCARGA"
+mkdir -p "$DIR_SALIDA"
+
+# 📋 MENÚ DE OPCIONES:
+echo "📋 MENÚ DE OPCIONES:"
+echo "📤 SUBIDA:"
+echo "  1) Subir audios generados a OneDrive ($RCLONE_REMOTE/audio)"
+echo "  2) Subir log a OneDrive ($RCLONE_REMOTE/log)"
+echo "  3) Subir hashes encriptados (.enc) a OneDrive ($RCLONE_REMOTE/log)"
+echo ""
+echo "📥 DESCARGA Y PROCESAMIENTO:"
+echo "  4) Descargar imágenes desde OneDrive"
+echo "  5) Convertir imágenes descargadas a audios"
+echo "  6) Renombrar archivos WAV con nombre de imagen original"
+echo ""
+echo "🧹 LIMPIEZA LOCAL:"
+echo "  7) Eliminar solo imágenes locales de: $DIR_DESCARGA"
+echo "  8) Eliminar imágenes y audios locales"
+echo "  9) Eliminar log locales ($LOG_FILE)"
+echo ""
+echo "🧪 VERIFICACIÓN:"
+echo " 10) Verificar hashes de imágenes descargadas con OneDrive"
+echo " 11) Verificar hashes de audios locales con los subidos"
+echo ""
+echo "🔐 CIFRADO:"
+echo " 12) Encriptar hashes con GPG (.enc)"
+echo " 13) Fusionar histórico .enc con nuevos hashes/logs"
+echo ""
+echo "🚪 SALIDA:"
+echo " 14) Salir"
+
+read -p "➡️ Elige una opción [1-14]: " opt
+
+case $opt in
+    1)
+        echo "☁️ Subiendo audios a OneDrive..."
+        total=$(ls "$DIR_SALIDA"/*.wav 2>/dev/null | wc -l)
+        count=0
+        for f in "$DIR_SALIDA"/*.wav; do
+            count=$((count+1))
+            echo -ne "  ⏫ Subiendo [$count/$total]: $(basename "$f")\r"
+            rclone copy "$f" "$RCLONE_REMOTE/audio" --no-traverse
+        done
+        echo -e "\n✅ Todos los audios han sido subidos."
+        ;;
+    2)
+      echo "📤 Subiendo archivos de log y hashes..."
+
+      rclone copy "$HASH_FILE" "$RCLONE_REMOTE/log" --no-traverse
+      rclone copy "$LOG_FILE" "$RCLONE_REMOTE/log" --no-traverse
+      rclone copy "$HASH_IMG" "$RCLONE_REMOTE/log" --no-traverse
+      rclone copy "$HASH_WAV" "$RCLONE_REMOTE/log" --no-traverse
+
+      echo "✅ Archivos subidos: log.txt, hashes.txt, hashes_imgs.txt, hashes_audios.txt"
+      ;;
+    3)
+        echo "📤 Subiendo hashes encriptados (.enc)"
+        rclone copy "$GPG_ENC_FILE" "$RCLONE_REMOTE/log" --no-traverse
+        echo "✅ Hashes encriptados subidos."
+        ;;
+    4)
+        echo "🔽 Descargando archivos desde $RCLONE_REMOTE/convertir ..."
+        rclone copy "$RCLONE_REMOTE/convertir" "$DIR_DESCARGA" --progress
+        echo "✅ Archivos descargados a $DIR_DESCARGA"
+        ;;
+    5)
+        echo "🧠 Ejecutando conversión de archivos..."
+        python3 procesar.py "$DIR_DESCARGA" "$DIR_SALIDA" "$LOG_FILE" "$HASH_FILE" "$MAP_FILE"
+        ;;
+    6)
+        echo "✏️ Renombrando archivos WAV con nombres de imagen desde log.txt..."
+        while IFS='|' read -r img wav; do
+           nombre_img=$(basename "$img" | sed 's/\.[^.]*$//')
+           nombre_wav=$(echo "$wav" | xargs)
+           nuevo_nombre="$DIR_SALIDA/$nombre_img.wav"
+           original_path="$DIR_SALIDA/$nombre_wav"
+           if [[ -f "$original_path" ]]; then
+               mv "$original_path" "$nuevo_nombre"
+               echo "🔁 $nombre_wav renombrado a $(basename "$nuevo_nombre")"
+           else
+               echo "⚠️  Archivo no encontrado: $original_path"
+           fi
+        done < "$LOG_FILE"
+        echo "✅ Todos los archivos fueron renombrados."
+        ;;
+    7)
+        echo "🗑️ Eliminando imágenes de $DIR_DESCARGA..."
+        rm -f "$DIR_DESCARGA"/*
+        echo "✅ Imágenes eliminadas."
+        ;;
+    8)
+        echo "🗑️ Eliminando imágenes y audios locales..."
+        rm -f "$DIR_DESCARGA"/*
+        rm -f "$DIR_SALIDA"/*
+        echo "✅ Limpieza completa."
+        ;;
+    9)
+        echo "🗑️ Eliminando log..."
+        rm -f "$LOG_FILE"
+        rm -f "$HASH_IMG"
+        rm -f "$HASH_WAV"
+        rm -f "$HASH_FILE"
+        rm -f "$GPG_ENC_FILE"
+        echo "✅ Log eliminado."
+        ;;
+    10)
+        echo "🔍 Verificando hashes de imágenes..." | tee "$HASH_IMG"
+        total_archivos=$(ls "$DIR_DESCARGA" | wc -l)
+        contador=0
+        for f in "$DIR_DESCARGA"/*; do
+            contador=$((contador+1))
+            nombre=$(basename "$f")
+            hash_local=$(sha256sum "$f" | awk '{print $1}')
+            hash_nube=$(rclone cat "$RCLONE_REMOTE/convertir/$nombre" 2>/dev/null | sha256sum | awk '{print $1}')
+
+            if [ "$hash_local" == "$hash_nube" ]; then
+                linea="  [$contador/$total_archivos] ✅ $hash_local → $nombre"
+            else
+                linea="  [$contador/$total_archivos] ❌ HASH DISTINTO: $nombre"
+            fi
+
+            echo "$linea"
+            echo "$linea" >> "$HASH_FILE"
+        done
+        ;;
+
+    11)
+       echo "🔍 Verificando hashes de audios..." | tee "$DIR_SALIDA"
+       total_audios=$(ls "$DIR_SALIDA"/*.wav | wc -l)
+       contador=0
+       for f in "$DIR_SALIDA"/*.wav; do
+           contador=$((contador+1))
+           nombre=$(basename "$f")
+           hash_local=$(sha256sum "$f" | awk '{print $1}')
+           hash_nube=$(rclone cat "$RCLONE_REMOTE/audio/$nombre" 2>/dev/null | sha256sum | awk '{print $1}')
+           if [ "$hash_local" == "$hash_nube" ]; then
+               echo "  [$contador/$total_audios] ✅ $hash_local → $nombre" | tee -a "$HASH_WAV"
+           else
+               echo "  [$contador/$total_audios] ❌ HASH MISMATCH: $nombre" | tee -a "$HASH_WAV"
+           fi
+       done
+       ;;
+    12)
+    echo "🔐 Encriptando hashes y logs juntos..."
+
+    # Crear carpeta temporal
+    mkdir -p /home/user/tmp_fusion
+
+    # Ruta de salida del .enc
+    GPG_ENC_FILE="/home/user/stego/hashes.txt.enc"
+
+    # Crear .tar.gz con todos los archivos
+    tar -czf /home/user/tmp_fusion/archivos_a_encriptar.tar.gz \
+        "$HASH_FILE" "$LOG_FILE" "$HASH_IMG" "$HASH_WAV"
+
+    # Encriptar ese .tar.gz
+    gpg --yes --batch -o "$GPG_ENC_FILE" -c /home/user/tmp_fusion/archivos_a_encriptar.tar.gz
+
+    echo "✅ Encriptado en $GPG_ENC_FILE (incluye hashes y log)"
+
+    # Limpiar temporal
+    rm -rf /home/user/tmp_fusion
+    ;;
+
+    13)
+    echo "📥 Descargando .enc histórico desde OneDrive..."
+    rclone copy "$RCLONE_REMOTE/log/hashes.txt.enc" /home/user --no-traverse
+
+    echo "🔐 Desencriptando archivo..."
+    gpg -d /home/user/hashes.txt.enc > /home/user/descifrado.tar.gz
+
+    echo "📦 Extrayendo contenido histórico..."
+    mkdir -p /home/user/historico_logs
+    tar -xzf /home/user/descifrado.tar.gz -C /home/user/historico_logs
+
+    echo "🧬 Fusionando con archivos nuevos..."
+    mkdir -p /home/user/fusion_final
+    for archivo in hashes.txt log.txt hashes_imgs.txt hashes_audios.txt; do
+        historico="/home/user/historico_logs/$archivo"
+        nuevo="/home/user/stego/$archivo"
+        destino="/home/user/fusion_final/$archivo"
+
+        # Fusionar sin perder info (si existe el archivo antiguo)
+        if [ -f "$historico" ]; then
+            cat "$historico" "$nuevo" > "$destino"
+        else
+            cp "$nuevo" "$destino"
+        fi
+
+        echo "📎 Fusionado: $archivo"
+    done
+
+    echo "📦 Empaquetando archivos fusionados..."
+    cd /home/user/fusion_final
+    tar -czf /home/user/archivos_fusionados.tar.gz *
+
+    echo "🔐 Encriptando nuevos logs fusionados..."
+    gpg --yes --batch -o /home/user/stego/hashes.txt.enc -c /home/user/archivos_fusionados.tar.gz
+
+    echo "📤 Subiendo nuevo .enc a la nube (OneDrive)..."
+    rclone copy /home/user/stego/hashes.txt.enc "$RCLONE_REMOTE/log" --no-traverse
+
+    echo "🧹 Limpiando temporales..."
+    rm -rf /home/user/hashes.txt.enc /home/user/descifrado.tar.gz /home/user/historico_logs /home/user/archivos_fusionados.tar.gz /home/user/fusion_final
+
+    echo "✅ Todo fusionado y actualizado en OneDrive."
+    ;;
+14)
+   echo "👋 Saliendo."
+   exit 0
+   ;;
+
+  *)
+   echo "❌ Opción inválida."
+   ;;
+esac
