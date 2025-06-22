@@ -35,7 +35,7 @@ echo ""
 echo "🧹 LIMPIEZA LOCAL:"
 echo "  7) Eliminar solo imágenes locales de: $DIR_DESCARGA"
 echo "  8) Eliminar imágenes y audios locales"
-echo "  9) Eliminar log local ($LOG_FILE)"
+echo "  9) Eliminar log locales ($LOG_FILE)"
 echo ""
 echo "🧪 VERIFICACIÓN:"
 echo " 10) Verificar hashes de imágenes descargadas con OneDrive"
@@ -116,6 +116,10 @@ case $opt in
     9)
         echo "🗑️ Eliminando log..."
         rm -f "$LOG_FILE"
+        rm -f "$HASH_IMG"
+        rm -f "$HASH_WAV"
+        rm -f "$HASH_FILE"
+        rm -f "$GPG_ENC_FILE"
         echo "✅ Log eliminado."
         ;;
     10)
