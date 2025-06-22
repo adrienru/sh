@@ -13,4 +13,4 @@ sudo chmod +x /usr/local/bin/5
 echo "✔️ Todo listo. Puedes usar el comando: 5"
 
 # ▶️ Ejecutar script adicional de configuración
-curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/rclone.sh | bash
