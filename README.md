@@ -45,7 +45,7 @@ sudo -v ; curl https://rclone.org/install.sh | sudo bash
 ### ejecutar install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/installps.sh | bash
+curl -fsSL https://raw.githubusercontent.com/adrienru/sh/refs/heads/main/install.sh | bash
 ```
 
 ### 📁 Estructura del proyecto
