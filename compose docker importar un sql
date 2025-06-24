@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_sqlite_import
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./dnit.sql:/docker-entrypoint-initdb.d/dnit.sql
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: adminer_ui
+    ports:
+      - "8181:8080"   # acceso por http://localhost:8181
+    depends_on:
+      - mysql
+    restart: unless-stopped
